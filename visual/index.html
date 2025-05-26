@@ -128,13 +128,13 @@
         queue=[0,0,0,0]
         setInterval(function(){
             [0,1,2,3].forEach(element => {
-               if (Math.floor(Math.random() * 10)>=0.5){
+               if (Math.floor(Math.random() * 10)>=5){
                 queue[element]--
                 } 
                 document.getElementById('count'+element).innerText=queue[element]
             });   
             [0,1,2,3].forEach(element => {
-               if (Math.floor(Math.random() * 10)>=0.5){
+               if (Math.floor(Math.random() * 10)>=5){
                 queue[element]+=2
                 } 
                                 document.getElementById('count'+element).innerText=queue[element]
