@@ -138,170 +138,31 @@
     </div>
     
     <div class="stats">
+        <div>북<span id="count0"></span></div>
+        <div>남<span id="count1"></span></div>
+        <div>동<span id="count2"></span></div>
+        <div>서<span id="count3"></span></div>
+        
         <p>현재 차량 수: <span id="car-count">0</span></p>
         <p>평균 대기 시간: <span id="avg-wait-time">0</span>초</p>
     </div>
 
     <script>
-        // 시뮬레이션 변수
-        let simulationRunning = false;
-        let cars = [];
-        let carCount = 0;
-        let totalWaitTime = 0;
-        let totalCarsPassed = 0;
-        let simulationInterval;
-        
-        // DOM 요소
-        const startBtn = document.getElementById('start-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const simulationContainer = document.querySelector('.simulation-container');
-        const carCountElement = document.getElementById('car-count');
-        const avgWaitTimeElement = document.getElementById('avg-wait-time');
-        
-        // 방향별 생성 위치
-        const spawnPositions = {
-            north: { x: 210, y: -10, direction: 'south' },
-            east: { x: 510, y: 210, direction: 'west' },
-            south: { x: 210, y: 510, direction: 'north' },
-            west: { x: -10, y: 210, direction: 'east' }
-        };
-        
-        // 차량 클래스
-        class Car {
-            constructor(direction) {
-                this.id = ++carCount;
-                this.direction = direction;
-                this.spawnTime = Date.now();
-                this.waitTime = 0;
-                this.speed = Math.random() * 2 + 1;
-                this.element = document.createElement('div');
-                this.element.className = 'car';
-                
-                const spawn = spawnPositions[direction];
-                this.x = spawn.x;
-                this.y = spawn.y;
-                this.targetDirection = spawn.direction;
-                
-                this.updatePosition();
-                simulationContainer.appendChild(this.element);
-            }
-            
-            updatePosition() {
-                this.element.style.left = `${this.x}px`;
-                this.element.style.top = `${this.y}px`;
-                
-                // 차량 방향에 따라 회전
-                if (this.direction === 'north') this.element.style.transform = 'rotate(180deg)';
-                if (this.direction === 'east') this.element.style.transform = 'rotate(270deg)';
-                if (this.direction === 'south') this.element.style.transform = 'rotate(0deg)';
-                if (this.direction === 'west') this.element.style.transform = 'rotate(90deg)';
-            }
-            
-            move() {
-                // 교차로 근처에서 속도 조절
-                const inIntersection = 
-                    (this.x > 150 && this.x < 350 && this.y > 150 && this.y < 350);
-                
-                const currentSpeed = inIntersection ? this.speed * 0.5 : this.speed;
-                
-                switch (this.direction) {
-                    case 'north':
-                        this.y -= currentSpeed;
-                        break;
-                    case 'east':
-                        this.x += currentSpeed;
-                        break;
-                    case 'south':
-                        this.y += currentSpeed;
-                        break;
-                    case 'west':
-                        this.x -= currentSpeed;
-                        break;
-                }
-                
-                this.updatePosition();
-                
-                // 차량이 화면을 벗어나면 제거
-                if (this.x < -50 || this.x > 550 || this.y < -50 || this.y > 550) {
-                    this.remove();
-                    return false;
-                }
-                
-                return true;
-            }
-            
-            remove() {
-                this.waitTime = (Date.now() - this.spawnTime) / 1000;
-                totalWaitTime += this.waitTime;
-                totalCarsPassed++;
-                avgWaitTimeElement.textContent = (totalWaitTime / totalCarsPassed).toFixed(2);
-                
-                this.element.remove();
-                cars = cars.filter(car => car.id !== this.id);
-                carCountElement.textContent = cars.length;
-            }
-        }
-        
-        // 차량 생성 함수
-        function spawnCar(direction) {
-            if (!simulationRunning) return;
-            
-            const car = new Car(direction);
-            cars.push(car);
-            carCountElement.textContent = cars.length;
-        }
-        
-        // 시뮬레이션 루프
-        function simulationLoop() {
-            // 모든 차량 이동
-            cars.forEach(car => car.move());
-            
-            // 차량이 너무 많아지지 않도록 제한
-            if (cars.length > 50) {
-                cars.slice(0, 10).forEach(car => car.remove());
-            }
-        }
-        
-        // 시뮬레이션 시작
-        function startSimulation() {
-            if (simulationRunning) return;
-            
-            simulationRunning = true;
-            const northRate = parseInt(document.getElementById('north').value) || 0;
-            const eastRate = parseInt(document.getElementById('east').value) || 0;
-            const southRate = parseInt(document.getElementById('south').value) || 0;
-            const westRate = parseInt(document.getElementById('west').value) || 0;
-            
-            // 차량 생성 간격 계산 (차량/시간 -> 밀리초/차량)
-            const northInterval = northRate > 0 ? 3600000 / northRate : 0;
-            const eastInterval = eastRate > 0 ? 3600000 / eastRate : 0;
-            const southInterval = southRate > 0 ? 3600000 / southRate : 0;
-            const westInterval = westRate > 0 ? 3600000 / westRate : 0;
-            
-            // 차량 생성 타이머 설정
-            if (northInterval > 0) setInterval(() => spawnCar('north'), northInterval);
-            if (eastInterval > 0) setInterval(() => spawnCar('east'), eastInterval);
-            if (southInterval > 0) setInterval(() => spawnCar('south'), southInterval);
-            if (westInterval > 0) setInterval(() => spawnCar('west'), westInterval);
-            
-            // 시뮬레이션 루프 시작 (60프레임)
-            simulationInterval = setInterval(simulationLoop, 1000/60);
-        }
-        
-        // 시뮬레이션 정지
-        function stopSimulation() {
-            simulationRunning = false;
-            clearInterval(simulationInterval);
-            
-            // 모든 차량 제거
-            cars.forEach(car => car.remove());
-            cars = [];
-            carCountElement.textContent = '0';
-        }
-        
-        // 이벤트 리스너
-        startBtn.addEventListener('click', startSimulation);
-        stopBtn.addEventListener('click', stopSimulation);
+        queue=[0,0,0,0]
+        setInterval(function(){
+            [0,1,2,3].forEach(element => {
+               if (Math.floor(Math.random() * 10)>=0.5){
+                queue[element]--
+                } 
+                document.getElementById('count'+element).innerText=queue[element]
+            });   
+            [0,1,2,3].forEach(element => {
+               if (Math.floor(Math.random() * 10)>=0.5){
+                queue[element]++
+                } 
+                                document.getElementById('count'+element).innerText=queue[element]
+            });     
+        },500)
     </script>
 </body>
 </html>
